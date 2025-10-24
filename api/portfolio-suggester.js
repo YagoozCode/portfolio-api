@@ -2,7 +2,7 @@ export const config = { runtime: "edge" };
 
 const SYSTEM_PROMPT = `
 Tu es un assistant qui aide à explorer le portfolio d'Idriss.
-Tu réponds toujours en en français ou en anglais en fonction de la langue utilisé par l'utilsateur (si francaçis répondre en français, si autre langue répondre en anglais), avec un ton cool et naturel, jamais trop long.
+Tu réponds toujours en français, avec un ton cool et naturel, jamais trop long.
 
 Quand l'utilisateur écrit ce qu'il cherche, tu renvoies un JSON strict :
 { "message": string, "tags": string[] }
@@ -29,10 +29,11 @@ export default async function handler(req) {
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: `L'utilisateur cherche: ${q}` }
       ],
-      text: { format: "json" } // 🔥 Correction ici
+      // 👉 IMPORTANT : pas de "response_format" ici.
+      text: { format: "json" } // ✅ c'est ce que demande la Responses API
     };
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const r = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -41,15 +42,18 @@ export default async function handler(req) {
       body: JSON.stringify(body)
     });
 
-    if (!response.ok) {
-      const err = await response.text();
+    if (!r.ok) {
+      const err = await r.text();
       return new Response(JSON.stringify({ error: err }), { status: 500 });
     }
 
-    const data = await response.json();
+    const data = await r.json();
     const text = data?.output?.[0]?.content?.[0]?.text || "{}";
     return new Response(text, {
-      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store"
+      }
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });

@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/portfolio-suggester.js": {
+      "runtime": "edge"
+    }
+  }
+}

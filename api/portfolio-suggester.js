@@ -29,7 +29,7 @@ export default async function handler(req) {
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: `L'utilisateur cherche: ${q}` }
       ],
-      response_format: { type: "json_object" }
+      text: { format: "json" } // 🔥 Correction ici
     };
 
     const response = await fetch("https://api.openai.com/v1/responses", {

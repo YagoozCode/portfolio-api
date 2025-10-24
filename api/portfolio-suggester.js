@@ -30,7 +30,7 @@ export default async function handler(req) {
     { role: "user", content: `L'utilisateur cherche: ${q}` }
   ],
   // ⬇️ ICI la bonne forme : un objet avec { type: "json" }
-  text: { format: { type: "json" } }
+  text: { format: { type: "json" } } //rajouté 
 };
 
 

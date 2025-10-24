@@ -24,14 +24,15 @@ export default async function handler(req) {
     const { q } = await req.json();
 
     const body = {
-      model: "gpt-4o-mini",
-      input: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `L'utilisateur cherche: ${q}` }
-      ],
-      // 👉 IMPORTANT : pas de "response_format" ici.
-      text: { format: "json" } // ✅ c'est ce que demande la Responses API
-    };
+  model: "gpt-4o-mini",
+  input: [
+    { role: "system", content: SYSTEM_PROMPT },
+    { role: "user", content: `L'utilisateur cherche: ${q}` }
+  ],
+  // ⬇️ ICI la bonne forme : un objet avec { type: "json" }
+  text: { format: { type: "json" } }
+};
+
 
     const r = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",

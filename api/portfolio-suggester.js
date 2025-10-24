@@ -10,29 +10,36 @@ Quand l'utilisateur écrit ce qu'il cherche, tu renvoies un JSON strict :
 Les tags possibles :
 ["mode","portraits","plans-dynamiques","danse","clip","pub","sport","noir-et-blanc","studio","exterieur","beaute","lifestyle"]
 
-Le champ "message" doit ressembler à :
-- "J'ai trouvé ça."
-- "Ça doit correspondre à ce que tu cherches."
-- "Regarde, ça colle bien avec ton style."
-
-Sélectionne 1 à 3 tags max selon la demande.
-Reste cool, accessible, jamais robotique.
+Le message peut être : "J'ai trouvé ça." / "Ça doit correspondre à ce que tu cherches."
+Choisis 1 à 3 tags max.
 `;
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",                   // si tu préfères, remplace * par "https://my.readymag.com"
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Max-Age": "86400",
+  "Content-Type": "application/json"
+};
+
 export default async function handler(req) {
+  // Répondre au preflight CORS
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { status: 200, headers: CORS_HEADERS });
+  }
+
   try {
     const { q } = await req.json();
 
     const body = {
-  model: "gpt-4o-mini",
-  input: [
-    { role: "system", content: SYSTEM_PROMPT },
-    { role: "user", content: `L'utilisateur cherche: ${q}` }
-  ],
-  // ⬇️ ICI la bonne forme : un objet avec { type: "json" }
-  text: { format: { type: "json_object" } } //rajouté 
-};
-
+      model: "gpt-4o-mini",
+      input: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: `L'utilisateur cherche: ${q}` }
+      ],
+      // Responses API → JSON
+      text: { format: { type: "json_object" } }
+    };
 
     const r = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -45,18 +52,14 @@ export default async function handler(req) {
 
     if (!r.ok) {
       const err = await r.text();
-      return new Response(JSON.stringify({ error: err }), { status: 500 });
+      return new Response(JSON.stringify({ error: err }), { status: 500, headers: CORS_HEADERS });
     }
 
     const data = await r.json();
-    const text = data?.output?.[0]?.content?.[0]?.text || "{}";
-    return new Response(text, {
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store"
-      }
-    });
+    const text = data?.output_text || data?.output?.[0]?.content?.[0]?.text || "{}";
+
+    return new Response(text, { status: 200, headers: CORS_HEADERS });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: CORS_HEADERS });
   }
 }
